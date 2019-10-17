@@ -1,0 +1,15 @@
+{
+  "name": "golden-json-helpers",
+  "version": "1.0.0",
+  "description": "A collection of independent helpers to make operations of JSONS containing runs and lumisections",
+  "main": "index.js",
+  "scripts": {
+    "test": "ava"
+  },
+  "author": "Fabio Espinosa",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "ava": "^2.2.0"
+  }
+}
