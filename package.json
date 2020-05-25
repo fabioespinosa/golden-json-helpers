@@ -1,6 +1,6 @@
 {
   "name": "golden-json-helpers",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "A collection of independent helpers to make operations of JSONS containing runs and lumisections",
   "main": "index.js",
   "scripts": {
@@ -10,6 +10,6 @@
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
-    "ava": "^2.2.0"
+    "ava": "^3.8.2"
   }
 }
