@@ -97,6 +97,8 @@ exports.convert_json_in_array_of_ranges_to_array_of_list = (json) => {
 };
 
 exports.add_jsons = (json1, json2) => {
+  json1 = json1 || {};
+  json2 = json2 || {};
   const hash_json = {};
   const json1_in_lists = exports.convert_json_in_array_of_ranges_to_array_of_list(
     json1
