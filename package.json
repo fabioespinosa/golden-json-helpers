@@ -1,6 +1,6 @@
 {
   "name": "golden-json-helpers",
-  "version": "1.2.1",
+  "version": "1.2.3",
   "description": "A collection of independent helpers to make operations of JSONS containing runs and lumisections",
   "main": "index.js",
   "scripts": {

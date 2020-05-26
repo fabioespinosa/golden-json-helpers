@@ -161,70 +161,35 @@ exports.add_ranges = (ranges1, ranges2) => {
     return ranges2;
   }
 
+  const joint_ranges = [...ranges1, ...ranges2];
+  const sorted_ranges = joint_ranges.sort((a, b) => {
+    const [start, end] = a;
+    const [start2, end2] = b;
+    if (start <= start2 && end <= end2) {
+      return -1;
+    }
+    return 1;
+  });
+
   const resulting_ranges = [];
-  ranges2.forEach((range) => {
-    const [start_lumisection, end_lumisection] = range;
-
-    ranges1.forEach((old_range) => {
-      const [start_lumisection_old, end_lumisection_old] = old_range;
-      // If the new range is more specific, we stick with the old range:
-      if (
-        start_lumisection >= start_lumisection_old &&
-        end_lumisection <= end_lumisection_old
-      ) {
-        // the new range is shorter, so we stick with the new range
-        resulting_ranges.push(old_range);
-      } else if (
-        // If the new range contains the previous range
-        start_lumisection <= start_lumisection_old &&
-        end_lumisection >= end_lumisection_old
-      ) {
-        resulting_ranges.push(range);
-      }
-      // If there are some lumisections below (not included in current range) and then some above (included) with current range
-      else if (
-        start_lumisection <= start_lumisection_old &&
-        end_lumisection >= start_lumisection_old
-      ) {
-        resulting_ranges.push([start_lumisection, end_lumisection]);
-      }
-      // If there are some lumisections in the current range and then some above, we stick with the stricter limit (the new lower limit) and the
-      else if (
-        start_lumisection <= end_lumisection_old &&
-        end_lumisection >= end_lumisection_old
-      ) {
-        resulting_ranges.push([start_lumisection_old, end_lumisection]);
-      }
-    });
-  });
-
-  // Add the ones which didn't intersect anywhere
-  const final_ranges = [...resulting_ranges];
-  ranges2.forEach((range) => {
-    const [start_lumisection, end_lumisection] = range;
-    resulting_ranges.forEach((old_range, index) => {
-      const [start_lumisection_old, end_lumisection_old] = old_range;
-      if (index === 0) {
-        if (end_lumisection < start_lumisection_old) {
-          final_ranges.shift(range);
-        }
-      } else if (index === resulting_ranges.length - 1) {
-        if (start_lumisection > end_lumisection_old) {
-          final_ranges.push(range);
-        }
+  if (sorted_ranges.length > 0) {
+    resulting_ranges.push(sorted_ranges[0]);
+    for (let index = 0; index < sorted_ranges.length; index++) {
+      const [start, end] = resulting_ranges[resulting_ranges.length - 1];
+      const [start_next, end_next] = sorted_ranges[index];
+      if (start_next <= end) {
+        // If ranges interlap:
+        const new_start = start <= start_next ? start : start_next;
+        const new_end = end >= end_next ? end : end_next;
+        resulting_ranges.pop();
+        resulting_ranges.push([new_start, new_end]);
       } else {
-        const next_range = resulting_ranges[index + 1];
-        const [start_next_range, end_next_range] = next_range;
-        if (
-          start_lumisection > end_lumisection_old &&
-          end_lumisection < start_next_range
-        ) {
-          final_ranges.push(range);
-        }
+        resulting_ranges.push([start_next, end_next]);
       }
-    });
-  });
-  return final_ranges;
+    }
+  }
+
+  return resulting_ranges;
 };
 
 // Ranges in one but not in other, using state machine
