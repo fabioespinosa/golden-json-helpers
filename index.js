@@ -124,6 +124,109 @@ exports.add_jsons = (json1, json2) => {
   return hash_json;
 };
 
+exports.add_jsons_fast = (json1, json2) => {
+  json1 = json1 || {};
+  json2 = json2 || {};
+  const resulting_json = {};
+  for (const [identifier, ls_ranges] of Object.entries(json1)) {
+    if (typeof resulting_json[identifier] === 'undefined') {
+      resulting_json[identifier] = ls_ranges;
+    } else {
+      resulting_json[identifier] = exports.add_ranges(
+        resulting_json[identifier],
+        ls_ranges
+      );
+    }
+  }
+  for (const [identifier, ls_ranges] of Object.entries(json2)) {
+    if (typeof resulting_json[identifier] === 'undefined') {
+      resulting_json[identifier] = ls_ranges;
+    } else {
+      resulting_json[identifier] = exports.add_ranges(
+        resulting_json[identifier],
+        ls_ranges
+      );
+    }
+  }
+  return resulting_json;
+};
+
+exports.add_ranges = (ranges1, ranges2) => {
+  ranges1 = ranges1 || [];
+  ranges2 = ranges2 || [];
+  if (!Array.isArray(ranges1) || !Array.isArray(ranges2)) {
+    throw `Ranges need to be arrays`;
+  }
+  if (ranges1.length === 0) {
+    return ranges2;
+  }
+
+  const resulting_ranges = [];
+  ranges2.forEach((range) => {
+    const [start_lumisection, end_lumisection] = range;
+
+    ranges1.forEach((old_range) => {
+      const [start_lumisection_old, end_lumisection_old] = old_range;
+      // If the new range is more specific, we stick with the old range:
+      if (
+        start_lumisection >= start_lumisection_old &&
+        end_lumisection <= end_lumisection_old
+      ) {
+        // the new range is shorter, so we stick with the new range
+        resulting_ranges.push(old_range);
+      } else if (
+        // If the new range contains the previous range
+        start_lumisection <= start_lumisection_old &&
+        end_lumisection >= end_lumisection_old
+      ) {
+        resulting_ranges.push(range);
+      }
+      // If there are some lumisections below (not included in current range) and then some above (included) with current range
+      else if (
+        start_lumisection <= start_lumisection_old &&
+        end_lumisection >= start_lumisection_old
+      ) {
+        resulting_ranges.push([start_lumisection, end_lumisection]);
+      }
+      // If there are some lumisections in the current range and then some above, we stick with the stricter limit (the new lower limit) and the
+      else if (
+        start_lumisection <= end_lumisection_old &&
+        end_lumisection >= end_lumisection_old
+      ) {
+        resulting_ranges.push([start_lumisection_old, end_lumisection]);
+      }
+    });
+  });
+
+  // Add the ones which didn't intersect anywhere
+  const final_ranges = [...resulting_ranges];
+  ranges2.forEach((range) => {
+    const [start_lumisection, end_lumisection] = range;
+    resulting_ranges.forEach((old_range, index) => {
+      const [start_lumisection_old, end_lumisection_old] = old_range;
+      if (index === 0) {
+        if (end_lumisection < start_lumisection_old) {
+          final_ranges.shift(range);
+        }
+      } else if (index === resulting_ranges.length - 1) {
+        if (start_lumisection > end_lumisection_old) {
+          final_ranges.push(range);
+        }
+      } else {
+        const next_range = resulting_ranges[index + 1];
+        const [start_next_range, end_next_range] = next_range;
+        if (
+          start_lumisection > end_lumisection_old &&
+          end_lumisection < start_next_range
+        ) {
+          final_ranges.push(range);
+        }
+      }
+    });
+  });
+  return final_ranges;
+};
+
 // Ranges in one but not in other, using state machine
 const experimental_state_machine_that_calculates_anges_in_one_but_not_in_other = (
   preserve_ranges,
